@@ -32,19 +32,21 @@ class VideoCapturer:
         """Initialize and start video capture"""
         try:
             if platform.system() == "Windows":
-                # Windows-specific capture methods
+                # Windows-specific capture methods - try multiple backends for virtual cameras
                 capture_methods = [
-                    (self.device_index, cv2.CAP_DSHOW),  # Try DirectShow first
-                    (self.device_index, cv2.CAP_ANY),  # Then try default backend
-                    (-1, cv2.CAP_ANY),  # Try -1 as fallback
-                    (0, cv2.CAP_ANY),  # Finally try 0 without specific backend
+                    (self.device_index, cv2.CAP_MSMF),   # Media Foundation - works with DroidCam/virtual cams
+                    (self.device_index, cv2.CAP_DSHOW),  # DirectShow
+                    (self.device_index, cv2.CAP_ANY),    # Default backend
                 ]
 
                 for dev_id, backend in capture_methods:
                     try:
                         self.cap = cv2.VideoCapture(dev_id, backend)
                         if self.cap.isOpened():
-                            break
+                            # Test read to make sure it actually works
+                            ret, _ = self.cap.read()
+                            if ret:
+                                break
                         self.cap.release()
                     except Exception:
                         continue
