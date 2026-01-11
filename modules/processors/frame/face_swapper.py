@@ -75,8 +75,9 @@ def get_face_swapper() -> Any:
     with THREAD_LOCK:
         if FACE_SWAPPER is None:
             model_name = "inswapper_128.onnx"
-            if "CUDAExecutionProvider" in modules.globals.execution_providers:
-                model_name = "inswapper_128_fp16.onnx"
+            # Always use FP32 model for better quality/stability
+            # if "CUDAExecutionProvider" in modules.globals.execution_providers:
+            #     model_name = "inswapper_128_fp16.onnx"
             model_path = os.path.join(models_dir, model_name)
             update_status(f"Loading face swapper model from: {model_path}", NAME)
             try:
@@ -1090,7 +1091,7 @@ def create_face_mask(face: Face, frame: Frame) -> np.ndarray:
         # Calculate convex hull of these points
         # Use try-except as convexHull can fail on degenerate input
         try:
-             hull = cv2.convexHull(full_face_poly.astype(np.float32)) # Use float for accuracy
+             hull = cv2.convexHull(face_outline_points.astype(np.float32)) # Use float for accuracy
              if hull is None or len(hull) < 3:
                  # print("Warning: Convex hull calculation failed or returned too few points.")
                  # Fallback: use bounding box of landmarks? Or just return empty mask?
